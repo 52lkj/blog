@@ -19,8 +19,8 @@ export function getFaviconKey(env: Env) {
 export function FaviconService(): Hono {
     const app = new Hono();
 
-    // GET /favicon
-    app.get("/", async (c: AppContext) => {
+    // GET /favicon.ico
+    app.get("/favicon.ico", async (c: AppContext) => {
         startTime(c, 'favicon-get');
         const env = c.get('env');
         const accessHost = env.S3_ACCESS_HOST || env.S3_ENDPOINT;
@@ -54,7 +54,7 @@ export function FaviconService(): Hono {
     });
 
     // GET /favicon/original
-    app.get("/original", async (c: AppContext) => {
+    app.get("/favicon/original", async (c: AppContext) => {
         startTime(c, 'favicon-original-get');
         const env = c.get('env');
         const accessHost = env.S3_ACCESS_HOST || env.S3_ENDPOINT;
@@ -90,7 +90,7 @@ export function FaviconService(): Hono {
     });
 
     // POST /favicon
-    app.post("/", async (c: AppContext) => {
+    app.post("/favicon", async (c: AppContext) => {
         startTime(c, 'favicon-upload');
         const env = c.get('env');
         const admin = c.get('admin');
