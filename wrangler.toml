@@ -1,0 +1,16 @@
+#:schema node_modules/wrangler/config-schema.json
+name = "sgzyp"
+main = "server/src/_worker.ts"
+compatibility_date = "2026-01-20"
+keep_vars = true
+
+[triggers]
+crons = ["*/20 * * * *"]
+
+[placement]
+mode = "smart"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "rin"
+database_id = "bb725b0c-6945-4368-be26-3ba04ef38ac4"

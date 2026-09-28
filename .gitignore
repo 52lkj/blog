@@ -9,7 +9,8 @@ test.ts
 *.log
 .env.production
 .wrangler
-wrangler.toml
+# The production Worker build needs a committed Wrangler entry point.
+!wrangler.toml
 # Logs
 logs
 npm-debug.log*
