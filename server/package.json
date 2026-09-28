@@ -4,7 +4,7 @@
   "module": "index.ts",
   "type": "module",
   "scripts": {
-    "build": "wrangler deploy --dry-run --outdir=dist",
+    "build": "wrangler deploy src/_worker.ts --name sgzyp --compatibility-date 2026-01-20 --dry-run --outdir=dist",
     "cf:deploy": "wrangler deploy",
     "dev": "bun wrangler dev --port 11498",
     "dev:cron": "bun wrangler dev --port 11498 --test-scheduled #see https://developers.cloudflare.com/workers/configuration/cron-triggers/#test-cron-triggers",
