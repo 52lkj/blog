@@ -88,6 +88,7 @@ export function UserService() {
                     query: t.Object({
                         state: t.String(),
                         code: t.String(),
+                        iss: t.Optional(t.Literal("https://github.com/login/oauth")),
                     })
                 })
                 .get('/profile', async ({ set, uid }) => {
