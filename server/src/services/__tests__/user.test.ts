@@ -135,7 +135,7 @@ describe('UserService', () => {
 
             try {
                 // OAuth callbacks need custom Cookie header, using direct request
-                const request = new Request('http://localhost/user/github/callback?code=valid_code&state=mock_state', {
+                const request = new Request('http://localhost/user/github/callback?code=valid_code&state=mock_state&iss=https%3A%2F%2Fgithub.com%2Flogin%2Foauth', {
                     headers: {
                         'Cookie': 'state=mock_state; redirect_to=http://localhost:5173/callback'
                     }
@@ -197,6 +197,20 @@ describe('UserService', () => {
             expect(response.status).toBe(400);
             const data = await response.json() as { error: { message: string } };
             expect(data.error.message).toBe('Invalid state parameter');
+        });
+
+        it('should reject an invalid issuer', async () => {
+            const request = new Request('http://localhost/user/github/callback?code=valid_code&state=mock_state&iss=https%3A%2F%2Fevil.example%2Foauth', {
+                headers: {
+                    'Cookie': 'state=mock_state; redirect_to=http://localhost:5173/callback'
+                }
+            });
+
+            const response = await app.handle(request, env);
+
+            expect(response.status).toBe(400);
+            const data = await response.json() as { error: { message: string } };
+            expect(data.error.message).toBe('Invalid issuer parameter');
         });
 
         it('should reject failed authorization', async () => {

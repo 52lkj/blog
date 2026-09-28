@@ -50,6 +50,10 @@ export function UserService(router: Router): void {
             if (!oauth2) {
                 throw new BadRequestError('GitHub OAuth is not configured');
             }
+
+            if (query.iss && query.iss !== 'https://github.com/login/oauth') {
+                throw new BadRequestError('Invalid issuer parameter');
+            }
             
             const { db, anyUser } = store;
 
