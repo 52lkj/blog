@@ -60,7 +60,7 @@ export function PaymentTestPage() {
     setError('')
     setOrder(null)
     try {
-      const created = await request<PaymentOrder>('/test/create')
+      const created = await request<PaymentOrder>('/test/create', {})
       setOrder(created)
       setRemaining(remainingSeconds(created.expiresAt))
       setStatus(created.status === 'paid' || created.status === 'late_paid' ? 'paid' : created.status)
