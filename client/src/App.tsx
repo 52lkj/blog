@@ -25,6 +25,7 @@ import { Tips, TipsPage } from './components/tips.tsx'
 import { useTranslation } from 'react-i18next'
 import { MomentsPage } from './page/moments'
 import { ErrorPage } from './page/error.tsx'
+import { PaymentTestPage } from './page/payment-test.tsx'
 
 function App() {
   const ref = useRef(false)
@@ -83,6 +84,10 @@ function App() {
               <link rel="icon" href={favicon} />}
           </Helmet>
           <Switch>
+            <Route path="/payment/test">
+              <PaymentTestPage />
+            </Route>
+
             <RouteMe path="/">
               <FeedsPage />
             </RouteMe>

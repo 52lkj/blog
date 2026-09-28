@@ -1,0 +1,283 @@
+.payment-page {
+  min-height: 100vh;
+  background: #f4f6f8;
+  color: #1f2329;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+}
+
+.payment-header {
+  height: 64px;
+  padding: 0 max(24px, calc((100vw - 1040px) / 2));
+  background: #1677ff;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.payment-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.payment-brand-mark {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  font-size: 21px;
+  line-height: 1;
+}
+
+.payment-header-label {
+  font-size: 14px;
+  opacity: .88;
+}
+
+.payment-shell {
+  width: min(100% - 32px, 520px);
+  min-height: 610px;
+  margin: 40px auto 22px;
+  padding: 36px 48px 24px;
+  background: #fff;
+  border: 1px solid #e5e8eb;
+  border-radius: 6px;
+  box-shadow: 0 8px 28px rgba(31, 35, 41, .08);
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.payment-order-heading {
+  min-height: 116px;
+}
+
+.payment-product {
+  margin: 0 0 8px;
+  color: #4e5969;
+  font-size: 16px;
+}
+
+.payment-order-heading h1 {
+  margin: 0;
+  color: #101828;
+  font-size: 42px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+  line-height: 1.2;
+}
+
+.payment-order-heading h1 span {
+  margin-right: 4px;
+  font-size: 25px;
+  font-weight: 500;
+}
+
+.payment-adjustment {
+  margin: 7px 0 0;
+  color: #86909c;
+  font-size: 12px;
+}
+
+.payment-qr-frame {
+  width: 264px;
+  height: 264px;
+  margin: 18px auto 16px;
+  padding: 13px;
+  border: 1px solid #d9dde3;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.payment-qr-frame svg {
+  display: block;
+  width: 236px;
+  height: 236px;
+}
+
+.payment-instruction {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin: 0;
+  color: #1f2329;
+  font-size: 16px;
+}
+
+.payment-instruction span {
+  color: #1677ff;
+  font-size: 21px;
+}
+
+.payment-business-note {
+  margin: 9px auto 0;
+  color: #4e5969;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.payment-business-note strong {
+  color: #e5484d;
+}
+
+.payment-countdown {
+  margin-top: 15px;
+  color: #86909c;
+  font-size: 13px;
+}
+
+.payment-countdown strong {
+  color: #e5484d;
+  font-variant-numeric: tabular-nums;
+}
+
+.payment-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 27px;
+  padding-top: 17px;
+  border-top: 1px solid #edf0f3;
+  color: #86909c;
+  font-size: 12px;
+  text-align: left;
+}
+
+.payment-meta code {
+  max-width: 76%;
+  overflow: hidden;
+  color: #4e5969;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.payment-state {
+  min-height: 500px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.payment-state h1,
+.payment-state h2 {
+  margin: 18px 0 8px;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.payment-state p {
+  max-width: 350px;
+  margin: 0;
+  color: #86909c;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.payment-state-icon {
+  color: #1677ff;
+  font-size: 64px;
+}
+
+.payment-success .payment-state-icon {
+  color: #00a870;
+}
+
+.payment-error .payment-state-icon {
+  color: #e5484d;
+}
+
+.payment-spinner {
+  width: 38px;
+  height: 38px;
+  border: 3px solid #dce9fb;
+  border-top-color: #1677ff;
+  border-radius: 50%;
+  animation: payment-spin .8s linear infinite;
+}
+
+.payment-button {
+  min-width: 132px;
+  height: 40px;
+  margin-top: 24px;
+  border: 0;
+  border-radius: 4px;
+  background: #1677ff;
+  color: #fff;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.payment-button:hover {
+  background: #0958d9;
+}
+
+.payment-button span {
+  margin-right: 6px;
+}
+
+.payment-footer {
+  padding: 0 16px 28px;
+  color: #9aa1ab;
+  font-size: 12px;
+  text-align: center;
+}
+
+.payment-footer span {
+  margin-right: 5px;
+}
+
+@keyframes payment-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 560px) {
+  .payment-header {
+    height: 56px;
+    padding: 0 18px;
+  }
+
+  .payment-brand {
+    font-size: 18px;
+  }
+
+  .payment-brand-mark {
+    width: 30px;
+    height: 30px;
+    font-size: 18px;
+  }
+
+  .payment-shell {
+    width: 100%;
+    min-height: calc(100vh - 120px);
+    margin: 0;
+    padding: 30px 20px 22px;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .payment-order-heading h1 {
+    font-size: 38px;
+  }
+
+  .payment-qr-frame {
+    margin-top: 12px;
+  }
+
+  .payment-state {
+    min-height: calc(100vh - 170px);
+  }
+
+  .payment-footer {
+    padding-top: 18px;
+    background: #fff;
+  }
+}

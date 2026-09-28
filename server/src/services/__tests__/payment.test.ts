@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it } from 'bun:test';
+import { afterEach, beforeAll, describe, expect, it, mock } from 'bun:test';
 import { createRouter } from '../../core/router';
 import { PaymentService, TEST_PRODUCT } from '../payment';
 import {
@@ -8,6 +8,8 @@ import {
     type AliMPayParameters,
 } from '../../utils/alimpay';
 import { createMockEnv } from '../../../tests/fixtures';
+
+const originalFetch = globalThis.fetch;
 
 function bytesToPem(bytes: ArrayBuffer, label: 'PRIVATE KEY' | 'PUBLIC KEY' | 'RSA PRIVATE KEY'): string {
     const base64 = btoa(String.fromCharCode(...new Uint8Array(bytes)));
@@ -105,7 +107,58 @@ describe('AliMPay signing', () => {
 });
 
 describe('AliMPay test product API', () => {
-    it('creates unique signed checkout URLs with the fixed product and price', async () => {
+    afterEach(() => {
+        globalThis.fetch = originalFetch;
+        mock.restore();
+    });
+
+    async function signedPlatformResponse(payload: AliMPayParameters): Promise<Record<string, unknown>> {
+        const sign = await signAliMPayParameters(payload, platformPrivateKey);
+        return { ...payload, sign, sign_type: 'RSA' };
+    }
+
+    function mockCreateRequests(options: { payableAmount?: string; invalidSignature?: boolean } = {}) {
+        const calls: URLSearchParams[] = [];
+        globalThis.fetch = mock(async (input: RequestInfo | URL, init?: RequestInit) => {
+            const url = new URL(String(input));
+            if (url.pathname === '/api/pay/create') {
+                const form = new URLSearchParams(String(init?.body));
+                calls.push(form);
+                const payload: AliMPayParameters = {
+                    code: 0,
+                    msg: 'success',
+                    trade_no: `PLATFORM${calls.length}`,
+                    pay_type: 'jump',
+                    pay_info: `https://pay.qlily13.cn/checkout/token-${calls.length}`,
+                    timestamp: String(Math.floor(Date.now() / 1000)),
+                };
+                const result = await signedPlatformResponse(payload);
+                if (options.invalidSignature) result.sign = 'invalid';
+                return Response.json(result);
+            }
+            if (url.pathname.startsWith('/public-api/checkout/')) {
+                const index = url.pathname.endsWith('token-2') ? 2 : 1;
+                const form = calls[index - 1];
+                return Response.json({
+                    trade_no: `PLATFORM${index}`,
+                    out_trade_no: form.get('out_trade_no'),
+                    name: TEST_PRODUCT.name,
+                    requested_money: TEST_PRODUCT.price,
+                    payable_money: options.payableAmount || '0.02',
+                    collection_mode: 'business_qr',
+                    status: 'pending',
+                    expires_at: new Date(Date.now() + 300_000).toISOString(),
+                    payment_poll_interval_seconds: 5,
+                    payment_uri: '',
+                });
+            }
+            return new Response('not found', { status: 404 });
+        }) as typeof fetch;
+        return calls;
+    }
+
+    it('creates unique real orders with the fixed product and actual payable amount', async () => {
+        const calls = mockCreateRequests({ payableAmount: '0.37' });
         const { app, env } = createPaymentApp();
         const firstResponse = await app.handle(new Request('https://api.sgzyp.com/payment/test/create', { method: 'POST' }), env);
         const secondResponse = await app.handle(new Request('https://api.sgzyp.com/payment/test/create', { method: 'POST' }), env);
@@ -116,21 +169,23 @@ describe('AliMPay test product API', () => {
         const second = await secondResponse.json() as any;
         expect(first.data.product).toEqual(TEST_PRODUCT);
         expect(first.data.orderNo).not.toBe(second.data.orderNo);
+        expect(first.data.tradeNo).toBe('PLATFORM1');
+        expect(first.data.payableAmount).toBe('0.37');
+        expect(first.data.requestedAmount).toBe('0.01');
+        expect(first.data.qrPayload).toBe('https://qr.alipay.com/2m613387crwspa4bkf0yu26');
+        expect(first.data.collectionMode).toBe('business_qr');
 
-        const paymentUrl = new URL(first.data.paymentUrl);
-        expect(paymentUrl.origin).toBe('https://pay.qlily13.cn');
-        expect(paymentUrl.pathname).toBe('/api/pay/submit');
-        expect(paymentUrl.searchParams.get('money')).toBe('0.01');
-        expect(paymentUrl.searchParams.get('name')).toBe(TEST_PRODUCT.name);
-        expect(paymentUrl.searchParams.get('notify_url')).toBe('https://api.sgzyp.com/api/payment/notify');
-        expect(paymentUrl.searchParams.get('sign_type')).toBe('RSA');
-
-        const signedParameters = Object.fromEntries(paymentUrl.searchParams.entries());
+        const signedParameters = Object.fromEntries(calls[0].entries());
+        expect(signedParameters.money).toBe('0.01');
+        expect(signedParameters.name).toBe(TEST_PRODUCT.name);
+        expect(signedParameters.notify_url).toBe('https://api.sgzyp.com/api/payment/notify');
+        expect(signedParameters.sign_type).toBe('RSA');
         const signature = signedParameters.sign;
         expect(await verifyAliMPaySignature(signedParameters, signature, merchantPublicKey)).toBe(true);
     });
 
     it('ignores client-supplied product names and amounts', async () => {
+        const calls = mockCreateRequests();
         const { app, env } = createPaymentApp();
         const response = await app.handle(new Request('https://api.sgzyp.com/payment/test/create', {
             method: 'POST',
@@ -138,15 +193,47 @@ describe('AliMPay test product API', () => {
             body: JSON.stringify({ name: 'Expensive item', money: '999.00' }),
         }), env);
         const result = await response.json() as any;
-        const paymentUrl = new URL(result.data.paymentUrl);
-        expect(paymentUrl.searchParams.get('name')).toBe(TEST_PRODUCT.name);
-        expect(paymentUrl.searchParams.get('money')).toBe(TEST_PRODUCT.price);
+        expect(result.data.product).toEqual(TEST_PRODUCT);
+        expect(calls[0].get('name')).toBe(TEST_PRODUCT.name);
+        expect(calls[0].get('money')).toBe(TEST_PRODUCT.price);
     });
 
     it('fails safely when the merchant private key is missing', async () => {
         const { app, env } = createPaymentApp({ ALIMPAY_MERCHANT_PRIVATE_KEY: '' });
         const response = await app.handle(new Request('https://api.sgzyp.com/payment/test/create', { method: 'POST' }), env);
         expect(response.status).toBe(503);
+    });
+
+    it('rejects an invalid platform response signature', async () => {
+        mockCreateRequests({ invalidSignature: true });
+        const { app, env } = createPaymentApp();
+        const response = await app.handle(new Request('https://api.sgzyp.com/payment/test/create', { method: 'POST' }), env);
+        expect(response.status).toBe(503);
+    });
+
+    it('queries and verifies a paid test order', async () => {
+        globalThis.fetch = mock(async (_input: RequestInfo | URL, init?: RequestInit) => {
+            const form = new URLSearchParams(String(init?.body));
+            const payload: AliMPayParameters = {
+                code: 0,
+                msg: 'success',
+                trade_no: form.get('trade_no'),
+                out_trade_no: form.get('out_trade_no'),
+                name: TEST_PRODUCT.name,
+                money: TEST_PRODUCT.price,
+                status: 1,
+                timestamp: String(Math.floor(Date.now() / 1000)),
+            };
+            return Response.json(await signedPlatformResponse(payload));
+        }) as typeof fetch;
+        const { app, env } = createPaymentApp();
+        const response = await app.handle(new Request('https://api.sgzyp.com/payment/test/query', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderNo: 'SGTESTORDER003', tradeNo: 'PLATFORM003' }),
+        }), env);
+        expect(response.status).toBe(200);
+        expect((await response.json() as any).data.status).toBe('paid');
     });
 
     it('accepts a valid successful platform notification', async () => {
