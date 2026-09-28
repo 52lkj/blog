@@ -9,13 +9,14 @@ import {
 } from '../../utils/alimpay';
 import { createMockEnv } from '../../../tests/fixtures';
 
-function bytesToPem(bytes: ArrayBuffer, label: 'PRIVATE KEY' | 'PUBLIC KEY'): string {
+function bytesToPem(bytes: ArrayBuffer, label: 'PRIVATE KEY' | 'PUBLIC KEY' | 'RSA PRIVATE KEY'): string {
     const base64 = btoa(String.fromCharCode(...new Uint8Array(bytes)));
     const lines = base64.match(/.{1,64}/g)?.join('\n') || '';
     return `-----BEGIN ${label}-----\n${lines}\n-----END ${label}-----`;
 }
 
 let merchantPrivateKey: string;
+let merchantPkcs1PrivateKey: string;
 let merchantPublicKey: string;
 let platformPrivateKey: string;
 let platformPublicKey: string;
@@ -32,10 +33,37 @@ beforeAll(async () => {
         ['sign', 'verify'],
     );
     merchantPrivateKey = bytesToPem(await crypto.subtle.exportKey('pkcs8', merchant.privateKey), 'PRIVATE KEY');
+    const merchantJwk = await crypto.subtle.exportKey('jwk', merchant.privateKey);
+    merchantPkcs1PrivateKey = bytesToPem(jwkToPkcs1(merchantJwk), 'RSA PRIVATE KEY');
     merchantPublicKey = bytesToPem(await crypto.subtle.exportKey('spki', merchant.publicKey), 'PUBLIC KEY');
     platformPrivateKey = bytesToPem(await crypto.subtle.exportKey('pkcs8', platform.privateKey), 'PRIVATE KEY');
     platformPublicKey = bytesToPem(await crypto.subtle.exportKey('spki', platform.publicKey), 'PUBLIC KEY');
 });
+
+function base64UrlToBytes(value: string): Uint8Array {
+    const base64 = value.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(value.length / 4) * 4, '=');
+    return Uint8Array.from(atob(base64), (character) => character.charCodeAt(0));
+}
+
+function encodeLength(length: number): number[] {
+    if (length < 0x80) return [length];
+    const bytes: number[] = [];
+    for (let remaining = length; remaining > 0; remaining >>>= 8) bytes.unshift(remaining & 0xff);
+    return [0x80 | bytes.length, ...bytes];
+}
+
+function encodeInteger(value: Uint8Array): number[] {
+    const needsLeadingZero = value[0] >= 0x80;
+    const bytes = needsLeadingZero ? [0, ...value] : [...value];
+    return [0x02, ...encodeLength(bytes.length), ...bytes];
+}
+
+function jwkToPkcs1(jwk: JsonWebKey): ArrayBuffer {
+    const integers = [jwk.n, jwk.e, jwk.d, jwk.p, jwk.q, jwk.dp, jwk.dq, jwk.qi]
+        .map((value) => encodeInteger(base64UrlToBytes(value!)));
+    const value = [0x02, 0x01, 0x00, ...integers.flat()];
+    return new Uint8Array([0x30, ...encodeLength(value.length), ...value]).buffer as ArrayBuffer;
+}
 
 function createPaymentApp(overrides: Partial<Env> = {}) {
     const env = createMockEnv({
@@ -67,6 +95,12 @@ describe('AliMPay signing', () => {
         const signature = await signAliMPayParameters(parameters, merchantPrivateKey);
         expect(await verifyAliMPaySignature(parameters, signature, merchantPublicKey)).toBe(true);
         expect(await verifyAliMPaySignature({ ...parameters, money: '9.99' }, signature, merchantPublicKey)).toBe(false);
+    });
+
+    it('accepts PKCS#1 merchant private keys', async () => {
+        const parameters = { pid: '2142742862', money: '0.01', name: TEST_PRODUCT.name };
+        const signature = await signAliMPayParameters(parameters, merchantPkcs1PrivateKey);
+        expect(await verifyAliMPaySignature(parameters, signature, merchantPublicKey)).toBe(true);
     });
 });
 
