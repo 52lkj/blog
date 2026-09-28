@@ -2,6 +2,20 @@ import { drizzle } from "drizzle-orm/d1";
 import { createApp, createDefaultApp } from "./server";
 import { CacheImpl } from "./utils/cache";
 
+export function getServicePath(path: string): string | null {
+    if (path.startsWith('/api/')) {
+        return path.slice(4);
+    }
+
+    // GitHub OAuth applications may still use the callback URL documented
+    // before the frontend and Worker were split into separate deployments.
+    if (path === '/user/github/callback') {
+        return path;
+    }
+
+    return null;
+}
+
 export default {
     async fetch(
         request: Request,
@@ -20,15 +34,12 @@ export default {
             return new Response('RSS Feed Not Found', { status: 404 });
         }
 
-        // Try API routes first (all APIs are under /api/)
-        if (path.startsWith('/api/')) {
-            // Remove /api prefix before passing to services
-            const apiPath = path.slice(4); // removes '/api'
-            const app = await createApp(env, apiPath);
+        // Route API requests and the legacy GitHub OAuth callback to services.
+        const servicePath = getServicePath(path);
+        if (servicePath) {
+            const app = await createApp(env, servicePath);
             if (app) {
-                // Create a new request with the modified URL (without /api prefix)
-                // so that router.handle() can match routes correctly
-                const modifiedUrl = new URL(apiPath + url.search, url.origin);
+                const modifiedUrl = new URL(servicePath + url.search, url.origin);
                 const modifiedRequest = new Request(modifiedUrl, request);
                 return await app.handle(modifiedRequest, env);
             }
