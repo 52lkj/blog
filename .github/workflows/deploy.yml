@@ -175,6 +175,10 @@ jobs:
           ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
           ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
           JWT_SECRET: ${{ secrets.JWT_SECRET || '' }}
+          ALIMPAY_BASE_URL: ${{ vars.ALIMPAY_BASE_URL || 'https://pay.qlily13.cn' }}
+          ALIMPAY_PID: ${{ vars.ALIMPAY_PID || '2142742862' }}
+          ALIMPAY_MERCHANT_PRIVATE_KEY: ${{ secrets.ALIMPAY_MERCHANT_PRIVATE_KEY || '' }}
+          ALIMPAY_PLATFORM_PUBLIC_KEY: ${{ secrets.ALIMPAY_PLATFORM_PUBLIC_KEY || '' }}
           WEBHOOK_URL: ${{ vars.WEBHOOK_URL || '' }}
           RSS_TITLE: ${{ vars.RSS_TITLE || '' }}
           RSS_DESCRIPTION: ${{ vars.RSS_DESCRIPTION || '' }}

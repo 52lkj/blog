@@ -12,6 +12,14 @@ interface ServiceLoader {
 
 // Service registry - order matters (longer prefixes first for specificity)
 const serviceRegistry: ServiceLoader[] = [
+    // AliMPay test checkout and callbacks
+    {
+        prefix: '/payment',
+        loader: async () => {
+            const { PaymentService } = await import('./services/payment');
+            return PaymentService;
+        }
+    },
     // AI Config
     {
         prefix: '/ai-config',

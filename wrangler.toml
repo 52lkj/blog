@@ -10,6 +10,10 @@ crons = ["*/20 * * * *"]
 [placement]
 mode = "smart"
 
+[vars]
+ALIMPAY_BASE_URL = "https://pay.qlily13.cn"
+ALIMPAY_PID = "2142742862"
+
 [[d1_databases]]
 binding = "DB"
 database_name = "rin"

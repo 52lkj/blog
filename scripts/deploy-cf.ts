@@ -32,6 +32,8 @@ const S3_FORCE_PATH_STYLE = env("S3_FORCE_PATH_STYLE", "false")
 const WEBHOOK_URL = env("WEBHOOK_URL", "")
 const RSS_TITLE = env("RSS_TITLE", "")
 const RSS_DESCRIPTION = env("RSS_DESCRIPTION", "")
+const ALIMPAY_BASE_URL = env("ALIMPAY_BASE_URL", "https://pay.qlily13.cn")
+const ALIMPAY_PID = env("ALIMPAY_PID", "2142742862")
 
 // Secrets
 const accessKeyId = env("S3_ACCESS_KEY_ID")
@@ -41,6 +43,8 @@ const githubClientId = env("RIN_GITHUB_CLIENT_ID")
 const githubClientSecret = env("RIN_GITHUB_CLIENT_SECRET")
 const adminUsername = env("ADMIN_USERNAME")
 const adminPassword = env("ADMIN_PASSWORD")
+const alimpayMerchantPrivateKey = env("ALIMPAY_MERCHANT_PRIVATE_KEY")
+const alimpayPlatformPublicKey = env("ALIMPAY_PLATFORM_PUBLIC_KEY")
 
 // Frontend build configuration
 const NAME = env("NAME", "Rin")
@@ -180,6 +184,7 @@ async function deploy(): Promise<string> {
 name = "${WORKER_NAME}"
 main = "${serverMain}"
 compatibility_date = "2026-01-20"
+keep_vars = true
 
 [triggers]
 crons = ["*/20 * * * *"]
@@ -195,6 +200,8 @@ S3_FORCE_PATH_STYLE = "${S3_FORCE_PATH_STYLE}"
 WEBHOOK_URL = "${WEBHOOK_URL}"
 RSS_TITLE = "${RSS_TITLE}"
 RSS_DESCRIPTION = "${RSS_DESCRIPTION}"
+ALIMPAY_BASE_URL = "${ALIMPAY_BASE_URL}"
+ALIMPAY_PID = "${ALIMPAY_PID}"
 
 [placement]
 mode = "smart"
@@ -301,6 +308,8 @@ mode = "smart"
     await putSecret('JWT_SECRET', jwtSecret)
     await putSecret('ADMIN_USERNAME', adminUsername)
     await putSecret('ADMIN_PASSWORD', adminPassword)
+    await putSecret('ALIMPAY_MERCHANT_PRIVATE_KEY', alimpayMerchantPrivateKey)
+    await putSecret('ALIMPAY_PLATFORM_PUBLIC_KEY', alimpayPlatformPublicKey)
 
     console.log(`Put Done.`)
     console.log(`----------------------------`)

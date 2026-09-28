@@ -38,6 +38,10 @@ declare namespace Cloudflare {
 		S3_ACCESS_KEY_ID: string;
 		S3_SECRET_ACCESS_KEY: string;
 		CACHE_STORAGE_MODE: "database" | "s3";
+		ALIMPAY_BASE_URL: string;
+		ALIMPAY_PID: string;
+		ALIMPAY_MERCHANT_PRIVATE_KEY: string;
+		ALIMPAY_PLATFORM_PUBLIC_KEY: string;
 	}
 }
 interface Env extends Cloudflare.Env {}
