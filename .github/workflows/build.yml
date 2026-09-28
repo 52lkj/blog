@@ -52,6 +52,7 @@ jobs:
       # Note: vite.config.ts builds directly to ../dist/client
       - name: Build client for production
         env:
+          API_URL: ${{ vars.API_URL || 'https://api.sgzyp.com' }}
           NAME: ${{ vars.NAME || 'Rin' }}
           DESCRIPTION: ${{ vars.DESCRIPTION || 'A lightweight personal blogging system' }}
           AVATAR: ${{ vars.AVATAR || '' }}
@@ -59,7 +60,8 @@ jobs:
           RSS_ENABLE: ${{ vars.RSS_ENABLE || 'false' }}
         run: |
           cd client
-          echo "NAME=${NAME}" > .env.production
+          echo "API_URL=${API_URL}" > .env.production
+          echo "NAME=${NAME}" >> .env.production
           echo "DESCRIPTION=${DESCRIPTION}" >> .env.production
           echo "AVATAR=${AVATAR}" >> .env.production
           echo "PAGE_SIZE=${PAGE_SIZE}" >> .env.production

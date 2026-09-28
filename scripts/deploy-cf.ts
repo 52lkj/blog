@@ -150,7 +150,7 @@ RSS_ENABLE=${RSS_ENABLE}
 }
 
 async function deploy(): Promise<string> {
-    console.log("🚀 Deploying Rin (Worker + Assets)...")
+    console.log("🚀 Deploying Rin Worker API...")
 
     // Get R2 bucket info
     const r2Info = await getR2BucketInfo()
@@ -174,18 +174,12 @@ async function deploy(): Promise<string> {
         console.log(`⚠️ No server build found, using source: ${serverMain}`)
     }
 
-    // Create wrangler.toml with assets configuration
+    // Create a Worker-only configuration. The frontend is deployed to Pages.
     Bun.write('wrangler.toml', stripIndent(`
 #:schema node_modules/wrangler/config-schema.json
 name = "${WORKER_NAME}"
 main = "${serverMain}"
 compatibility_date = "2026-01-20"
-
-[assets]
-directory = "./dist/client"
-binding = "ASSETS"
-run_worker_first = true
-not_found_handling = "single-page-application"
 
 [triggers]
 crons = ["*/20 * * * *"]
@@ -310,9 +304,9 @@ mode = "smart"
 
     console.log(`Put Done.`)
     console.log(`----------------------------`)
-    console.log(`Deploying Worker with Assets`)
+    console.log(`Deploying Worker API`)
 
-    // Deploy worker with assets
+    // Deploy the backend Worker. Pages is deployed separately by the workflow.
     const { stdout: deployOutput, stderr: deployStderr } = await $`echo -e "n\ny\n" | bunx wrangler deploy`
 
     // Extract worker URL from deploy output

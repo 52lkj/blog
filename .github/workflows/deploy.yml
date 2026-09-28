@@ -90,7 +90,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: ${{ needs.prepare.outputs.is_production == 'true' && 'production' || 'preview' }}
-      url: ${{ steps.deploy.outputs.url }}
+      url: ${{ steps.pages.outputs.url }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -180,4 +180,21 @@ jobs:
           RSS_DESCRIPTION: ${{ vars.RSS_DESCRIPTION || '' }}
         run: |
           bun run deploy
-          echo "url=https://${WORKER_NAME}.${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.workers.dev" >> $GITHUB_OUTPUT
+
+      - name: Deploy frontend to Cloudflare Pages
+        id: pages
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          PAGES_PROJECT_NAME: ${{ vars.PAGES_PROJECT_NAME || 'sgzyp-blog' }}
+        run: |
+          if [[ "${{ needs.prepare.outputs.is_production }}" == "true" ]]; then
+            PAGES_BRANCH="main"
+          else
+            PAGES_BRANCH="preview"
+          fi
+          bunx wrangler pages deploy ./dist/client \
+            --project-name="${PAGES_PROJECT_NAME}" \
+            --branch="${PAGES_BRANCH}" \
+            --commit-hash="${{ github.sha }}"
+          echo "url=https://${PAGES_PROJECT_NAME}.pages.dev" >> $GITHUB_OUTPUT
