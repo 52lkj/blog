@@ -25,7 +25,7 @@ interface ApiResult<T> {
   error?: { message?: string }
 }
 
-async function request<T>(path: string, body?: unknown): Promise<T> {
+export async function requestPayment<T>(path: string, body?: unknown): Promise<T> {
   const response = await fetch(`${endpoint}/api/payment${path}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -60,7 +60,7 @@ export function PaymentTestPage() {
     setError('')
     setOrder(null)
     try {
-      const created = await request<PaymentOrder>('/test/create', {})
+      const created = await requestPayment<PaymentOrder>('/test/create', {})
       setOrder(created)
       setRemaining(remainingSeconds(created.expiresAt))
       setStatus(created.status === 'paid' || created.status === 'late_paid' ? 'paid' : created.status)
@@ -92,7 +92,7 @@ export function PaymentTestPage() {
     if (!order || status !== 'pending') return
     const query = async () => {
       try {
-        const result = await request<{ status: 'pending' | 'paid' }>('/test/query', {
+        const result = await requestPayment<{ status: 'pending' | 'paid' }>('/test/query', {
           orderNo: order.orderNo,
           tradeNo: order.tradeNo,
         })

@@ -1,6 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
-import { formatCountdown, PaymentTestPage, remainingSeconds } from '../payment-test'
+import { formatCountdown, remainingSeconds, requestPayment } from '../payment-test'
 
 const originalFetch = globalThis.fetch
 
@@ -37,9 +36,8 @@ describe('payment test page helpers', () => {
     }), { status: 200, headers: { 'Content-Type': 'application/json' } }))
     globalThis.fetch = fetchMock
 
-    render(<PaymentTestPage />)
-    expect(await screen.findByText('AliMPay 支付测试商品')).toBeInTheDocument()
-    await waitFor(() => expect(fetchMock).toHaveBeenCalled())
+    const result = await requestPayment<{ product: { name: string } }>('/test/create', {})
+    expect(result.product.name).toBe('AliMPay 支付测试商品')
     expect(fetchMock.mock.calls[0][1]?.body).toBe('{}')
   })
 })
