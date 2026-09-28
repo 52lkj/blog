@@ -184,6 +184,8 @@ compatibility_date = "2026-01-20"
 [assets]
 directory = "./dist/client"
 binding = "ASSETS"
+run_worker_first = true
+not_found_handling = "single-page-application"
 
 [triggers]
 crons = ["*/20 * * * *"]
