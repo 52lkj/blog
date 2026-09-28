@@ -3,10 +3,12 @@ import { $ } from "bun"
 export async function fixTopField(typ: 'local' | 'remote', db: string, isInfoExistResult: boolean) {
     if (!isInfoExistResult) {
         console.log("Legacy database, check top field")
-        const result = await $`bunx wrangler d1 execute ${db}  --${typ} --json --command "SELECT name FROM pragma_table_info('feeds') WHERE name='top'"`.quiet().json()
+        const findTopFieldSql = "SELECT name FROM pragma_table_info('feeds') WHERE name='top'"
+        const result = await $`bunx wrangler d1 execute ${db} --${typ} --json --command=${findTopFieldSql}`.quiet().json()
         if (result[0].results.length === 0) {
             console.log("Adding top field to feeds table")
-            await $`bunx wrangler d1 execute ${db}  --${typ} --json --command "ALTER TABLE feeds ADD COLUMN top INTEGER DEFAULT 0"`.quiet()
+            const addTopFieldSql = "ALTER TABLE feeds ADD COLUMN top INTEGER DEFAULT 0"
+            await $`bunx wrangler d1 execute ${db} --${typ} --json --command=${addTopFieldSql}`.quiet()
         } else {
             console.log("Top field already exists in feeds table")
         }
@@ -16,7 +18,8 @@ export async function fixTopField(typ: 'local' | 'remote', db: string, isInfoExi
 }
 
 export async function isInfoExist(typ: 'local' | 'remote', db: string) {
-    const result = await $`bunx wrangler d1 execute ${db}  --${typ} --json --command "SELECT name FROM sqlite_master WHERE type='table' AND name='info'"`.quiet().json()
+    const sql = "SELECT name FROM sqlite_master WHERE type='table' AND name='info'"
+    const result = await $`bunx wrangler d1 execute ${db} --${typ} --json --command=${sql}`.quiet().json()
     if (result[0].results.length === 0) {
         console.log("info table not exists")
         return false
@@ -32,7 +35,8 @@ export async function getMigrationVersion(typ: 'local' | 'remote', db: string) {
         console.log("Legacy database, migration_version not exists")
         return -1
     }
-    const result = await $`bunx wrangler d1 execute ${db}  --${typ} --json --command "SELECT value FROM info WHERE key='migration_version'"`.quiet().json()
+    const sql = "SELECT value FROM info WHERE key='migration_version'"
+    const result = await $`bunx wrangler d1 execute ${db} --${typ} --json --command=${sql}`.quiet().json()
     if (result[0].results.length === 0) {
         console.log("migration_version not exists")
         return -1
@@ -48,6 +52,7 @@ export async function updateMigrationVersion(typ: 'local' | 'remote', db: string
         console.log("info table not exists, skip update migration_version")
         throw new Error("info table not exists")
     }
-    await $`bunx wrangler d1 execute ${db}  --${typ} --json --command "UPDATE info SET value='${version}' WHERE key='migration_version'"`.quiet()
+    const sql = `UPDATE info SET value='${version}' WHERE key='migration_version'`
+    await $`bunx wrangler d1 execute ${db} --${typ} --json --command=${sql}`.quiet()
     console.log("Updated migration_version to", version)
 }

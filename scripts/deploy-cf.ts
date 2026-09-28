@@ -389,7 +389,8 @@ async function migrateVisitsToHLL(typ: string, dbName: string) {
     console.log(`Checking if HyperLogLog migration is needed...`);
 
     try {
-        const { stdout: countResult } = await $`bunx wrangler d1 execute ${dbName} --${typ} --json --command="SELECT COUNT(*) as count FROM visit_stats WHERE hll_data != ''"`.quiet();
+        const countSql = "SELECT COUNT(*) as count FROM visit_stats WHERE hll_data != ''";
+        const { stdout: countResult } = await $`bunx wrangler d1 execute ${dbName} --${typ} --json --command=${countSql}`.quiet();
         const migratedCount = parseWranglerCount(countResult.toString());
 
         if (migratedCount > 0) {
@@ -397,7 +398,8 @@ async function migrateVisitsToHLL(typ: string, dbName: string) {
             return;
         }
 
-        const { stdout: visitsCount } = await $`bunx wrangler d1 execute ${dbName} --${typ} --json --command="SELECT COUNT(*) as count FROM visits"`.quiet();
+        const visitsCountSql = "SELECT COUNT(*) as count FROM visits";
+        const { stdout: visitsCount } = await $`bunx wrangler d1 execute ${dbName} --${typ} --json --command=${visitsCountSql}`.quiet();
         const totalVisits = parseWranglerCount(visitsCount.toString());
 
         if (totalVisits === 0) {
@@ -408,7 +410,8 @@ async function migrateVisitsToHLL(typ: string, dbName: string) {
         console.log(`  Found ${totalVisits} visits to migrate to HyperLogLog format.`);
         console.log('  Starting migration...');
 
-        const { stdout: feedIdsResult } = await $`bunx wrangler d1 execute ${dbName} --${typ} --json --command="SELECT DISTINCT feed_id FROM visits"`.quiet();
+        const feedIdsSql = "SELECT DISTINCT feed_id FROM visits";
+        const { stdout: feedIdsResult } = await $`bunx wrangler d1 execute ${dbName} --${typ} --json --command=${feedIdsSql}`.quiet();
         const feedIds = parseWranglerFeedIds(feedIdsResult.toString());
 
         console.log(`  Processing ${feedIds.length} feeds...`);
@@ -416,7 +419,8 @@ async function migrateVisitsToHLL(typ: string, dbName: string) {
         let processed = 0;
         for (const feedId of feedIds) {
             try {
-                const { stdout: ipsResult } = await $`bunx wrangler d1 execute ${dbName} --${typ} --json --command="SELECT ip FROM visits WHERE feed_id = ${feedId}"`.quiet();
+                const ipsSql = `SELECT ip FROM visits WHERE feed_id = ${feedId}`;
+                const { stdout: ipsResult } = await $`bunx wrangler d1 execute ${dbName} --${typ} --json --command=${ipsSql}`.quiet();
                 const ips = parseWranglerIPs(ipsResult.toString());
 
                 if (ips.length === 0) {
