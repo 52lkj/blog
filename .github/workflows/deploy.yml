@@ -88,6 +88,8 @@ jobs:
   deploy:
     needs: prepare
     runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_PAGES_API_TOKEN: ${{ secrets.CLOUDFLARE_PAGES_API_TOKEN }}
     environment:
       name: ${{ needs.prepare.outputs.is_production == 'true' && 'production' || 'preview' }}
       url: https://sgzyp-blog.pages.dev
@@ -191,10 +193,16 @@ jobs:
           bun run deploy
 
       - name: Deploy frontend to Cloudflare Pages
+        if: ${{ env.CLOUDFLARE_PAGES_API_TOKEN != '' }}
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ env.CLOUDFLARE_PAGES_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           PAGES_PROJECT_NAME: ${{ steps.config.outputs.pages_project_name }}
           PAGES_BRANCH: ${{ steps.config.outputs.pages_branch }}
         run: |
           bunx wrangler pages deploy ./dist/client --project-name "$PAGES_PROJECT_NAME" --branch "$PAGES_BRANCH"
+
+      - name: Report skipped Pages deployment
+        if: ${{ env.CLOUDFLARE_PAGES_API_TOKEN == '' }}
+        run: |
+          echo "::warning::CLOUDFLARE_PAGES_API_TOKEN is not configured; frontend deployment was skipped."
